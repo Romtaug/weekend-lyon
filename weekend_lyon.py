@@ -9,27 +9,25 @@ recherche (dans ta session Claude, donc sans API et sans cout API).
 Aucune dependance externe : uniquement la librairie standard Python.
 
 Variables d'environnement (secrets GitHub) :
-  SMTP_USER   login SMTP Brevo
-  SMTP_PASS   cle SMTP Brevo
-  MAIL_FROM   adresse expediteur verifiee sur Brevo
+  SMTP_HOST   serveur SMTP (ex: smtp.gmail.com, ssl0.ovh.net, ...)
+  SMTP_USER   identifiant SMTP
+  SMTP_PASS   mot de passe / cle SMTP
+  MAIL_FROM   adresse expediteur
   MAIL_TO     destinataire(s), separes par virgule (par defaut = MAIL_FROM)
 Optionnel :
+  SMTP_PORT       port SMTP (defaut 587 STARTTLS ; 465 = SSL)
   PERIOD          "weekend" (defaut) ou texte libre ("cette semaine", "ce soir"...)
   ORIGIN_ADDRESS  point de depart (defaut: 5 rue de Conde, 69002 Lyon)
-  ATTACHMENTS     chemin(s) de fichier(s) a joindre, separes par virgule
   DRY_RUN         "1" pour generer le HTML sans envoyer l'email
 """
 
 import os
 import sys
 import smtplib
-import mimetypes
 import datetime as dt
 from zoneinfo import ZoneInfo
 from email.mime.text import MIMEText
-from email.mime.base import MIMEBase
 from email.mime.multipart import MIMEMultipart
-from email import encoders
 from urllib.parse import quote
 
 ORIGIN = os.environ.get("ORIGIN_ADDRESS") or "5 rue de Conde, 69002 Lyon"
@@ -175,52 +173,32 @@ def parse_recipients(raw):
     return [p.strip() for p in parts if p.strip()]
 
 
-def attach_files(msg, paths):
-    """Joint chaque fichier existant. paths = liste de chemins."""
-    for path in paths:
-        path = path.strip()
-        if not path or not os.path.isfile(path):
-            if path:
-                print(f"Piece jointe introuvable, ignoree : {path}")
-            continue
-        ctype, encoding = mimetypes.guess_type(path)
-        if ctype is None or encoding is not None:
-            ctype = "application/octet-stream"
-        maintype, subtype = ctype.split("/", 1)
-        with open(path, "rb") as f:
-            part = MIMEBase(maintype, subtype)
-            part.set_payload(f.read())
-        encoders.encode_base64(part)
-        part.add_header("Content-Disposition", "attachment",
-                        filename=os.path.basename(path))
-        msg.attach(part)
-        print(f"Piece jointe ajoutee : {os.path.basename(path)}")
-
-
 def send_email(html, subject):
+    smtp_host = os.environ["SMTP_HOST"]
+    smtp_port = int(os.environ.get("SMTP_PORT", "587"))
     smtp_user = os.environ["SMTP_USER"]
     smtp_pass = os.environ["SMTP_PASS"]
     mail_from = os.environ["MAIL_FROM"]
     recipients = parse_recipients(os.environ.get("MAIL_TO")) or [mail_from]
-    attachments = parse_recipients(os.environ.get("ATTACHMENTS"))
 
-    # "mixed" pour pouvoir porter du HTML ET des pieces jointes
-    msg = MIMEMultipart("mixed")
+    msg = MIMEMultipart("alternative")
     msg["Subject"] = subject
     msg["From"] = mail_from
     msg["To"] = ", ".join(recipients)
+    msg.attach(MIMEText("Active l'affichage HTML pour voir le bouton.", "plain", "utf-8"))
+    msg.attach(MIMEText(html, "html", "utf-8"))
 
-    body = MIMEMultipart("alternative")
-    body.attach(MIMEText("Active l'affichage HTML pour voir le bouton.", "plain", "utf-8"))
-    body.attach(MIMEText(html, "html", "utf-8"))
-    msg.attach(body)
-
-    attach_files(msg, attachments)
-
-    with smtplib.SMTP("smtp-relay.brevo.com", 587) as server:
-        server.starttls()
-        server.login(smtp_user, smtp_pass)
-        server.sendmail(mail_from, recipients, msg.as_string())
+    if smtp_port == 465:
+        # Port SSL implicite
+        with smtplib.SMTP_SSL(smtp_host, smtp_port) as server:
+            server.login(smtp_user, smtp_pass)
+            server.sendmail(mail_from, recipients, msg.as_string())
+    else:
+        # STARTTLS (587 et autres)
+        with smtplib.SMTP(smtp_host, smtp_port) as server:
+            server.starttls()
+            server.login(smtp_user, smtp_pass)
+            server.sendmail(mail_from, recipients, msg.as_string())
     print(f"Email envoye a {', '.join(recipients)}")
 
 
