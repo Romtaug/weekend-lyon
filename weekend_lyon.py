@@ -97,7 +97,44 @@ def build_prompt(desc, extra=""):
         "'Vendredi soir', 'Samedi', 'Dimanche', 'Gratuit ou pas cher' : chaque bouton "
         "est un lien https://claude.ai/new?q=... qui relance une recherche ciblee sur "
         "ce jour (ou ce critere). "
-        "Reste concret, va droit au but."
+        "Reste concret, va droit au but. "
+        # --- Contraintes techniques : eviter la page blanche dans l'apercu ---
+        "CONTRAINTES TECHNIQUES DE L'ARTEFACT (obligatoires) : l'artefact est un seul "
+        "fichier HTML autonome, CSS en ligne, AUCUN script, AUCUNE ressource ni iframe "
+        "externe (donc pas de lecteur video/YouTube integre, pas de police ni image "
+        "distante, pas de localStorage/sessionStorage). Echappe TOUS les caracteres "
+        "speciaux du HTML : chaque '&' devient '&amp;', surtout dans les URL (liens "
+        "Google Maps du type &origin= &destination= &travelmode=) ET dans les textes "
+        "(ex. 'house & funk'). URL propres : espaces encodes en %20 ou +, guillemets "
+        "droits pour les attributs, liens complets en https://, target=_blank. Verifie "
+        "que la balise <style> est fermee et que html/head/body sont equilibres. "
+        # --- Verification des liens ---
+        "VERIFICATION DES LIENS : chaque bouton de reservation pointe vers une page "
+        "officielle qui existe reellement ; verifie le domaine par une recherche web "
+        "avant de l'inserer, ne devine jamais une URL. Les boutons 'Itineraire' "
+        "utilisent le format officiel Google Maps "
+        "(https://www.google.com/maps/dir/?api=1&amp;origin=...&amp;destination=...&amp;travelmode=transit). "
+        # --- Double verification avant livraison ---
+        "DOUBLE VERIFICATION AVANT DE LIVRER (ne livre que si les 4 points sont OK, et "
+        "indique le resultat en une seule ligne) : 1) balises html/head/style/body "
+        "equilibrees ; 2) zero '&' non echappe (aucune occurrence de '&' qui ne soit "
+        "pas '&amp;' ou une entite) ; 3) tous les href valides, complets et verifies ; "
+        "4) aucun script ni ressource externe. Si un point echoue, corrige puis "
+        "re-verifie avant d'envoyer. "
+        # --- Qualite de contenu + video en lien, pas en iframe ---
+        "QUALITE DE CONTENU (obligatoire) : pour chaque reco, 2-3 phrases d'explication "
+        "concrete (ce que c'est, pourquoi ca vaut le coup, ce qui la distingue), au-dela "
+        "du simple titre ; toujours categorie, lieu/quartier, date + horaire precis, "
+        "prix approximatif, trajet depuis le point de depart, ambiance "
+        "(solo/couple/amis) et lien officiel. Si une info (prix, dispo, horaire) n'est "
+        "pas certaine, dis-le explicitement. Verifie chaque date : rien de passe, rien "
+        "de generique ni d'intemporel. Si une bande-annonce ou une video d'annonce "
+        "existe, ajoute-la comme simple lien cliquable (bouton), JAMAIS comme lecteur "
+        "integre. "
+        # --- Securite d'affichage ---
+        "SECURITE D'AFFICHAGE : fournis toujours le fichier telechargeable en plus de "
+        "l'apercu, et rappelle en une ligne : si l'apercu reste blanc, basculer entre la "
+        "vue code et la vue apercu, ou ouvrir le fichier dans le navigateur."
     )
     return base
 
