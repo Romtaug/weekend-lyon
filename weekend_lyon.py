@@ -9,14 +9,14 @@ recherche (dans ta session Claude, donc sans API et sans cout API).
 Aucune dependance externe : uniquement la librairie standard Python.
 
 Variables d'environnement :
-  Requis (3 secrets) :
-    SMTP_HOST   serveur SMTP (ex: smtp.gmail.com, ssl0.ovh.net, ...)
-    SMTP_USER   identifiant SMTP
-    SMTP_PASS   mot de passe / cle SMTP
-  Optionnels (deduits si absents) :
-    MAIL_FROM   expediteur (defaut = SMTP_USER)
+  Requis (2 secrets) :
+    SMTP_USER   ton adresse Gmail
+    SMTP_PASS   mot de passe d'application Gmail (16 caracteres, cf README)
+  Optionnels (defauts Gmail deja poses) :
+    SMTP_HOST   defaut smtp.gmail.com
+    SMTP_PORT   defaut 587 (STARTTLS ; 465 = SSL)
+    MAIL_FROM   defaut = SMTP_USER
     MAIL_TO     destinataire(s) separes par virgule (defaut = MAIL_FROM)
-    SMTP_PORT   port SMTP (defaut 587 STARTTLS ; 465 = SSL)
     PERIOD          "weekend" (defaut) ou texte libre ("cette semaine", "ce soir"...)
     ORIGIN_ADDRESS  point de depart (defaut: 5 rue de Conde, 69002 Lyon)
     DRY_RUN         "1" pour generer le HTML sans envoyer l'email
@@ -175,11 +175,12 @@ def parse_recipients(raw):
 
 
 def send_email(html, subject):
-    smtp_host = os.environ["SMTP_HOST"]
+    # 2 secrets requis : SMTP_USER (ton adresse) + SMTP_PASS (mot de passe d'app).
+    # Serveur/port Gmail par defaut, surchargeables si besoin.
+    smtp_host = os.environ.get("SMTP_HOST") or "smtp.gmail.com"
     smtp_port = int(os.environ.get("SMTP_PORT") or "587")
     smtp_user = os.environ["SMTP_USER"]
-    smtp_pass = os.environ["SMTP_PASS"]
-    # Deduits par defaut : expediteur = identifiant SMTP, destinataire = expediteur
+    smtp_pass = os.environ["SMTP_PASS"].replace(" ", "")
     mail_from = os.environ.get("MAIL_FROM") or smtp_user
     recipients = parse_recipients(os.environ.get("MAIL_TO")) or [mail_from]
 
