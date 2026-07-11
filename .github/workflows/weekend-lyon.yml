@@ -1,0 +1,70 @@
+name: Weekend Lyon
+
+on:
+  schedule:
+    # Le cron GitHub est en UTC et ne gere pas l'heure d'ete.
+    # On declenche a 15:00 ET 16:00 UTC le vendredi ; le garde-fou Python
+    # (SEND_HOUR_PARIS) ne laisse passer QUE l'occurrence a 17h heure de Paris.
+    #   ete  (CEST, UTC+2) : 15:00 UTC = 17h Paris -> envoi ; 16:00 UTC = 18h -> ignore
+    #   hiver (CET, UTC+1) : 15:00 UTC = 16h -> ignore ; 16:00 UTC = 17h -> envoi
+    - cron: "0 15 * * 5"
+    - cron: "0 16 * * 5"
+  workflow_dispatch:
+    inputs:
+      period:
+        description: "Periode a couvrir (weekend = defaut, ou texte libre)"
+        required: false
+        default: "weekend"
+      mail_to:
+        description: "Destinataire(s), separes par virgule (vide = ton adresse)"
+        required: false
+        default: ""
+      origin:
+        description: "Point de depart / lieu (vide = 5 rue de Conde, Lyon)"
+        required: false
+        default: ""
+      attachments:
+        description: "Fichier(s) a joindre, chemins separes par virgule (optionnel)"
+        required: false
+        default: ""
+      dry_run:
+        description: "1 = generer le HTML sans envoyer l'email"
+        required: false
+        default: "0"
+
+jobs:
+  send:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Run
+        env:
+          SMTP_USER: ${{ secrets.SMTP_USER }}
+          SMTP_PASS: ${{ secrets.SMTP_PASS }}
+          MAIL_FROM: ${{ secrets.MAIL_FROM }}
+          # Destinataire(s) : input manuel, sinon secret MAIL_TO, sinon MAIL_FROM (dans le script)
+          MAIL_TO: ${{ github.event.inputs.mail_to || secrets.MAIL_TO }}
+          # Lieu de depart : input manuel, sinon defaut du script (5 rue de Conde)
+          ORIGIN_ADDRESS: ${{ github.event.inputs.origin }}
+          PERIOD: ${{ github.event.inputs.period || 'weekend' }}
+          ATTACHMENTS: ${{ github.event.inputs.attachments }}
+          DRY_RUN: ${{ github.event.inputs.dry_run || '0' }}
+          # Garde-fou horaire uniquement sur les runs planifies (17h Paris pile).
+          # Vide sur lancement manuel => envoi immediat.
+          SEND_HOUR_PARIS: ${{ github.event_name == 'schedule' && '17' || '' }}
+        run: python weekend_lyon.py
+
+      - name: Upload HTML artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: weekend-lyon-html
+          path: output/weekend_lyon.html
+          if-no-files-found: ignore
