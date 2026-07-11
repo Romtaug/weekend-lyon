@@ -8,21 +8,24 @@ Au clic, Claude te rend le résultat **en artefact** : une carte par sortie (cou
 
 ## 1. Secrets à créer
 
-Repo > **Settings > Secrets and variables > Actions > New repository secret**. Seulement **3 secrets requis** :
+Repo > **Settings > Secrets and variables > Actions > New repository secret**. **2 secrets requis** :
 
 | Secret | Valeur |
 |---|---|
-| `SMTP_HOST` | serveur SMTP (ex. `smtp.gmail.com`, `ssl0.ovh.net`, `smtp.mailgun.org`...) |
-| `SMTP_USER` | identifiant SMTP |
-| `SMTP_PASS` | mot de passe / clé SMTP |
+| `SMTP_USER` | ton adresse Gmail (ex. `toi@gmail.com`) |
+| `SMTP_PASS` | ton **mot de passe d'application Gmail** (16 caractères, voir ci-dessous) |
 
-Optionnels (déduits automatiquement si tu ne les crées pas) :
+Le reste est déjà réglé dans le script : serveur `smtp.gmail.com`, port `587`, expéditeur et destinataire = ton adresse. Tu peux surcharger via les secrets `MAIL_TO`, `SMTP_PORT`, etc. si besoin, mais ce n'est pas nécessaire.
 
-| Secret | Défaut |
-|---|---|
-| `MAIL_FROM` | = `SMTP_USER` |
-| `MAIL_TO` | = `MAIL_FROM` (plusieurs adresses possibles, séparées par des virgules) |
-| `SMTP_PORT` | `587` (STARTTLS). Mets `465` pour du SSL implicite |
+### Obtenir le mot de passe d'application Gmail
+
+Depuis mai 2025, Gmail refuse le mot de passe classique pour le SMTP : il faut un mot de passe d'application.
+
+1. Active la **validation en 2 étapes** sur ton compte Google (obligatoire, sinon l'option n'apparaît pas) : Compte Google > Sécurité > Validation en 2 étapes.
+2. Va sur **https://myaccount.google.com/apppasswords** (lien direct ; Google a retiré l'entrée du menu).
+3. Donne un nom (ex. `weekend-lyon`) et clique sur Créer.
+4. Copie le code de **16 caractères**, **sans les espaces**.
+5. Colle-le dans le secret GitHub `SMTP_PASS`.
 
 C'est tout. Aucune clé API à gérer.
 
