@@ -23,10 +23,6 @@ on:
         description: "Point de depart / lieu (vide = 5 rue de Conde, Lyon)"
         required: false
         default: ""
-      attachments:
-        description: "Fichier(s) a joindre, chemins separes par virgule (optionnel)"
-        required: false
-        default: ""
       dry_run:
         description: "1 = generer le HTML sans envoyer l'email"
         required: false
@@ -46,6 +42,8 @@ jobs:
 
       - name: Run
         env:
+          SMTP_HOST: ${{ secrets.SMTP_HOST }}
+          SMTP_PORT: ${{ secrets.SMTP_PORT }}
           SMTP_USER: ${{ secrets.SMTP_USER }}
           SMTP_PASS: ${{ secrets.SMTP_PASS }}
           MAIL_FROM: ${{ secrets.MAIL_FROM }}
@@ -54,7 +52,6 @@ jobs:
           # Lieu de depart : input manuel, sinon defaut du script (5 rue de Conde)
           ORIGIN_ADDRESS: ${{ github.event.inputs.origin }}
           PERIOD: ${{ github.event.inputs.period || 'weekend' }}
-          ATTACHMENTS: ${{ github.event.inputs.attachments }}
           DRY_RUN: ${{ github.event.inputs.dry_run || '0' }}
           # Garde-fou horaire uniquement sur les runs planifies (17h Paris pile).
           # Vide sur lancement manuel => envoi immediat.
