@@ -8,17 +8,18 @@ recherche (dans ta session Claude, donc sans API et sans cout API).
 
 Aucune dependance externe : uniquement la librairie standard Python.
 
-Variables d'environnement (secrets GitHub) :
-  SMTP_HOST   serveur SMTP (ex: smtp.gmail.com, ssl0.ovh.net, ...)
-  SMTP_USER   identifiant SMTP
-  SMTP_PASS   mot de passe / cle SMTP
-  MAIL_FROM   adresse expediteur
-  MAIL_TO     destinataire(s), separes par virgule (par defaut = MAIL_FROM)
-Optionnel :
-  SMTP_PORT       port SMTP (defaut 587 STARTTLS ; 465 = SSL)
-  PERIOD          "weekend" (defaut) ou texte libre ("cette semaine", "ce soir"...)
-  ORIGIN_ADDRESS  point de depart (defaut: 5 rue de Conde, 69002 Lyon)
-  DRY_RUN         "1" pour generer le HTML sans envoyer l'email
+Variables d'environnement :
+  Requis (3 secrets) :
+    SMTP_HOST   serveur SMTP (ex: smtp.gmail.com, ssl0.ovh.net, ...)
+    SMTP_USER   identifiant SMTP
+    SMTP_PASS   mot de passe / cle SMTP
+  Optionnels (deduits si absents) :
+    MAIL_FROM   expediteur (defaut = SMTP_USER)
+    MAIL_TO     destinataire(s) separes par virgule (defaut = MAIL_FROM)
+    SMTP_PORT   port SMTP (defaut 587 STARTTLS ; 465 = SSL)
+    PERIOD          "weekend" (defaut) ou texte libre ("cette semaine", "ce soir"...)
+    ORIGIN_ADDRESS  point de depart (defaut: 5 rue de Conde, 69002 Lyon)
+    DRY_RUN         "1" pour generer le HTML sans envoyer l'email
 """
 
 import os
@@ -175,10 +176,11 @@ def parse_recipients(raw):
 
 def send_email(html, subject):
     smtp_host = os.environ["SMTP_HOST"]
-    smtp_port = int(os.environ.get("SMTP_PORT", "587"))
+    smtp_port = int(os.environ.get("SMTP_PORT") or "587")
     smtp_user = os.environ["SMTP_USER"]
     smtp_pass = os.environ["SMTP_PASS"]
-    mail_from = os.environ["MAIL_FROM"]
+    # Deduits par defaut : expediteur = identifiant SMTP, destinataire = expediteur
+    mail_from = os.environ.get("MAIL_FROM") or smtp_user
     recipients = parse_recipients(os.environ.get("MAIL_TO")) or [mail_from]
 
     msg = MIMEMultipart("alternative")
