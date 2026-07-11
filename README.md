@@ -8,16 +8,21 @@ Au clic, Claude te rend le résultat **en artefact** : une carte par sortie (cou
 
 ## 1. Secrets à créer
 
-Repo > **Settings > Secrets and variables > Actions > New repository secret** :
+Repo > **Settings > Secrets and variables > Actions > New repository secret**. Seulement **3 secrets requis** :
 
 | Secret | Valeur |
 |---|---|
 | `SMTP_HOST` | serveur SMTP (ex. `smtp.gmail.com`, `ssl0.ovh.net`, `smtp.mailgun.org`...) |
 | `SMTP_USER` | identifiant SMTP |
 | `SMTP_PASS` | mot de passe / clé SMTP |
-| `MAIL_FROM` | adresse expéditeur |
-| `MAIL_TO` | destinataire(s) par défaut = toi. Plusieurs adresses possibles, séparées par des virgules. Optionnel : si absent, on utilise `MAIL_FROM` |
-| `SMTP_PORT` | optionnel. `587` par défaut (STARTTLS). Mets `465` pour du SSL implicite |
+
+Optionnels (déduits automatiquement si tu ne les crées pas) :
+
+| Secret | Défaut |
+|---|---|
+| `MAIL_FROM` | = `SMTP_USER` |
+| `MAIL_TO` | = `MAIL_FROM` (plusieurs adresses possibles, séparées par des virgules) |
+| `SMTP_PORT` | `587` (STARTTLS). Mets `465` pour du SSL implicite |
 
 C'est tout. Aucune clé API à gérer.
 
