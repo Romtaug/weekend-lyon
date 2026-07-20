@@ -26,7 +26,6 @@ import os
 import sys
 import smtplib
 import datetime as dt
-from zoneinfo import ZoneInfo
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from urllib.parse import quote
@@ -242,23 +241,7 @@ def send_email(html, subject):
     print(f"Email envoye a {', '.join(recipients)}")
 
 
-def hour_gate():
-    """En run planifie, n'autorise l'envoi qu'a l'heure de Paris voulue.
-    SEND_HOUR_PARIS vide => pas de garde-fou (lancements manuels)."""
-    target = os.environ.get("SEND_HOUR_PARIS")
-    if not target:
-        return True
-    now_paris = dt.datetime.now(ZoneInfo("Europe/Paris"))
-    if now_paris.hour != int(target):
-        print(f"Heure de Paris {now_paris.hour}h != {target}h cible : envoi ignore.")
-        return False
-    return True
-
-
 def main():
-    if not hour_gate():
-        return
-
     label, desc = compute_period()
     print(f"Periode : {label}")
     html = render_html(label, desc)
